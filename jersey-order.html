@@ -1029,9 +1029,11 @@ function goToPayment() {
   }
 
   slipBase64 = null;
+  orderSubmitted = false;
   document.getElementById('slip-preview').style.display = 'none';
   const btn = document.getElementById('btn-submit');
   btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed';
+  btn.textContent = '✅ ยืนยันการสั่งซื้อ';
   goPage('payment');
 }
 
@@ -1105,7 +1107,14 @@ uploadArea.addEventListener('drop', e => {
 });
 
 // ── Submit ─────────────────────────────────────────────────────
+let orderSubmitted = false;
 async function submitOrder() {
+  if (orderSubmitted) return;
+  orderSubmitted = true;
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed';
+  btn.textContent = '⏳ กำลังส่งคำสั่งซื้อ...';
+
   const total = cart.reduce((s, i) => s + i.subtotal, 0);
 
   // Build summary HTML
