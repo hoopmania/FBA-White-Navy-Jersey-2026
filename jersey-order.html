@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สั่งซื้อชุดแข่ง FBA</title>
+
+<!-- ============================================================
+  📸 วิธีเปลี่ยนรูปภาพ — แก้ที่ CONFIG ด้านล่างนี้เลย
+  ============================================================ -->
+<script>
+const CONFIG = {
+  // 💰 ราคาต่อชุด (บาท)
+  pricePerSet: 450,
+
+  // 🏦 ข้อมูลธนาคารสำหรับแสดงผล
+  bankName: 'ธนาคารกสิกรไทย (KBank)',
+  accountName: 'Mr. Samon Mekjumroen',
+  accountNumber: 'รอเลขบัญชีจากเพื่อน',  // ← แก้ตรงนี้เมื่อได้เลขบัญชีมาแล้ว
+
+  // 👤 LINE สำหรับติดต่อ
+  lineId: 'Kenchiro Japan',
+
+  // 📸 รูปภาพ — วางไฟล์รูปไว้ในโฟลเดอร์เดียวกับ HTML แล้วแก้ชื่อด้านล่าง
+  images: {
+    // รูปดีไซน์ชุดสีน้ำเงิน (แสดงในหน้าสั่งซื้อ)
+    jerseyNavy: 'jersey-design-navy.jpg',   // ← แก้ชื่อไฟล์ตรงนี้
+
+    // รูปดีไซน์ชุดสีขาว (แสดงในหน้าสั่งซื้อ)
+    jerseyWhite: 'jersey-design-white.jpg', // ← แก้ชื่อไฟล์ตรงนี้
+
+    // ตารางไซส์
+    sizeChart: 'size-chart.jpg',        // ← แก้ชื่อไฟล์ตรงนี้
+
+    // 🔴 รูป QR PromptPay ของคุณ — วางไฟล์รูป QR แล้วใส่ชื่อตรงนี้
+    promptPayQR: 'promptpay-qr.jpg',    // ← แก้ชื่อไฟล์ตรงนี้
+  },
+
+  // 📋 ชื่อทีม (แสดงในหน้าเว็บ)
+  teamName: 'FBA',
+
+  // 🌐 Google Apps Script URL สำหรับรับข้อมูลออเดอร์ (ตั้งค่าทีหลังได้)
+  // ถ้ายังไม่มี ปล่อยว่างไว้ก่อน — ระบบจะข้ามขั้นตอนนี้
+  scriptUrl: 'https://script.google.com/macros/s/AKfycbyFhBzIcRPa7ncAJ4wBOHBVibejnOLO6pUcVxS2Cy5MKXBtkhGMScetqqmfM62AILU1PA/exec',
+};
+</script>
+
+<style>
+  :root {
+    --navy: #0a1f44;
+    --navy-light: #162d5e;
+    --red: #c0392b;
+    --white: #ffffff;
+    --gray-bg: #f4f6f9;
+    --gray-border: #dde3ed;
+    --success: #27ae60;
+    --text: #2c3e50;
+    --shadow: 0 2px 12px rgba(10,31,68,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: var(--gray-bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  header {
+    background: var(--navy);
+    color: var(--white);
+    text-align: center;
+    padding: 28px 20px 20px;
+    position: relative;
+  }
+  header .badge {
+    display: inline-block;
+    background: var(--red);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 3px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  header h1 { font-size: 26px; font-weight: 800; letter-spacing: 1px; }
+  header p { margin-top: 6px; font-size: 13px; opacity: 0.75; }
+
+  /* Steps bar */
+  .steps {
+    display: flex;
+    background: var(--navy-light);
+    overflow: hidden;
+  }
+  .step {
+    flex: 1;
+    text-align: center;
+    padding: 10px 4px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    cursor: default;
+    transition: all 0.3s;
+  }
+  .step.active { color: white; background: rgba(255,255,255,0.1); }
+  .step.done { color: rgba(255,255,255,0.6); }
+  .step span { display: block; font-size: 16px; margin-bottom: 2px; }
+
+  /* Main container */
+  .container { max-width: 680px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  /* Cards */
+  .card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Form elements */
+  .form-group { margin-bottom: 18px; }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  label .hint {
+    font-weight: 400;
+    color: #7f8c9a;
+    font-size: 12px;
+    margin-left: 4px;
+  }
+  input[type="text"],
+  input[type="tel"],
+  input[type="number"],
+  select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--gray-border);
+    border-radius: 10px;
+    font-size: 15px;
+    color: var(--text);
+    background: #fafbfd;
+    transition: border 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--navy);
+    background: white;
+  }
+  input.error, select.error { border-color: var(--red); }
+
+  .error-msg {
+    color: var(--red);
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  /* Jersey image */
+  .jersey-img {
+    width: 100%;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    display: block;
+  }
+  .jersey-img[src=''] { display: none; }
+
+  /* Jersey preview gallery (navy + white) */
+  .jersey-preview-gallery {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .jersey-preview-item { text-align: center; }
+  .jersey-preview-item img {
+    width: 100%;
+    border-radius: 12px;
+    display: block;
+  }
+  .jersey-preview-item img[src=''] { display: none; }
+  .jersey-preview-item .pv-label {
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .jersey-preview-missing {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-bg);
+    border-radius: 12px;
+    color: #999;
+    font-size: 12px;
+    text-align: center;
+    padding: 10px;
+  }
+
+  /* Color options */
+  .color-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .color-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1.5px solid var(--gray-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .color-option:hover { border-color: var(--navy); }
+  .color-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--navy);
+    flex-shrink: 0;
+  }
+  .color-option .swatches {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .color-option .swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gray-border);
+  }
+  .color-option .swatch.navy { background: var(--navy); }
+  .color-option .swatch.white { background: #ffffff; }
+  .color-option .co-text { flex: 1; }
+  .color-option .co-title { font-size: 14px; font-weight: 700; color: var(--text); }
+  .color-option .co-sub { font-size: 12px; color: #7f8c9a; margin-top: 2px; }
+  .color-option.selected {
+    border-color: var(--navy);
+    background: #f0f4ff;
+  }
+  .color-option.selected .co-title { color: var(--navy); }
+
+  /* Size chart toggle */
+  .size-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--navy);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--gray-bg);
+    border: 1.5px solid var(--gray-border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    margin-bottom: 14px;
+    transition: background 0.2s;
+  }
+  .size-toggle:hover { background: #e8ecf4; }
+
+  .size-chart-popup {
+    display: none;
+    margin-bottom: 16px;
+  }
+  .size-chart-popup.open { display: block; }
+  .size-chart-popup img { width: 100%; border-radius: 10px; }
+
+  /* Price badge */
+  .price-info {
+    background: linear-gradient(135deg, var(--navy), var(--navy-light));
+    color: white;
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .price-info .label { font-size: 13px; opacity: 0.8; }
+  .price-info .price { font-size: 22px; font-weight: 800; }
+
+  /* Add to cart button */
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: var(--navy);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--navy-light); }
+  .btn-red {
+    background: var(--red);
+    color: white;
+  }
+  .btn-red:hover { background: #a93226; }
+  .btn-success {
+    background: var(--success);
+    color: white;
+  }
+  .btn-outline {
+    background: white;
+    color: var(--navy);
+    border: 2px solid var(--navy);
+    margin-top: 10px;
+  }
+
+  /* Cart items */
+  .cart-item {
+    border: 1.5px solid var(--gray-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .cart-item-info { flex: 1; }
+  .cart-item-name { font-weight: 700; font-size: 15px; color: var(--navy); }
+  .cart-item-detail { font-size: 12px; color: #7f8c9a; margin-top: 3px; }
+  .cart-item-price { font-weight: 800; font-size: 17px; color: var(--navy); white-space: nowrap; }
+  .cart-item-remove {
+    background: none;
+    border: none;
+    color: #bdc3c7;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0 4px;
+    line-height: 1;
+  }
+  .cart-item-remove:hover { color: var(--red); }
+
+  .cart-empty {
+    text-align: center;
+    padding: 24px;
+    color: #bdc3c7;
+    font-size: 14px;
+  }
+
+  /* Total */
+  .total-bar {
+    background: var(--navy);
+    color: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 16px 0;
+  }
+  .total-bar .t-label { font-size: 14px; opacity: 0.8; }
+  .total-bar .t-amount { font-size: 26px; font-weight: 900; }
+
+  /* QR + Payment card */
+  .payment-card {
+    background: linear-gradient(160deg, var(--navy) 0%, var(--navy-light) 100%);
+    border-radius: 16px;
+    padding: 24px 20px;
+    color: white;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .payment-card .amount-label { font-size: 13px; opacity: 0.7; margin-bottom: 4px; }
+  .payment-card .amount-value { font-size: 32px; font-weight: 900; margin-bottom: 20px; }
+  .qr-wrap {
+    background: white;
+    border-radius: 14px;
+    padding: 14px;
+    display: inline-block;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .qr-wrap img { width: 200px; height: 200px; display: block; border-radius: 6px; }
+  .qr-missing {
+    width: 200px; height: 200px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: #f4f6f9; border-radius: 6px;
+    font-size: 12px; color: #999; gap: 8px;
+  }
+  .bank-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.10);
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin: 6px 0;
+    font-size: 14px;
+    text-align: left;
+  }
+  .bank-detail-row .bd-label { opacity: 0.7; font-size: 12px; }
+  .bank-detail-row .bd-value { font-weight: 700; font-size: 15px; }
+  .copy-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .copy-btn:hover { background: rgba(255,255,255,0.25); }
+  .copy-btn.copied { background: var(--success); border-color: var(--success); }
+
+  /* Slip upload */
+  .upload-area {
+    border: 2px dashed var(--gray-border);
+    border-radius: 12px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .upload-area:hover, .upload-area.dragover {
+    border-color: var(--navy);
+    background: #f0f4ff;
+  }
+  .upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .upload-icon { font-size: 36px; margin-bottom: 8px; }
+  .upload-text { font-size: 14px; color: #7f8c9a; }
+  .upload-text strong { color: var(--navy); }
+
+  #slip-preview {
+    margin-top: 14px;
+    display: none;
+  }
+  #slip-preview img {
+    width: 100%;
+    max-width: 280px;
+    border-radius: 10px;
+    border: 2px solid var(--gray-border);
+    margin: 0 auto;
+    display: block;
+  }
+  #slip-preview .slip-ok {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--success);
+    font-weight: 600;
+  }
+
+  /* Section pages */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Confirmation */
+  .confirm-box {
+    text-align: center;
+    padding: 20px 10px;
+  }
+  .confirm-icon { font-size: 72px; margin-bottom: 16px; }
+  .confirm-title { font-size: 24px; font-weight: 800; color: var(--navy); margin-bottom: 10px; }
+  .confirm-sub { font-size: 14px; color: #7f8c9a; line-height: 1.7; }
+  .order-summary-card {
+    background: var(--gray-bg);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 20px;
+    text-align: left;
+    font-size: 13px;
+    line-height: 2;
+  }
+
+  /* Divider */
+  hr { border: none; border-top: 1.5px solid var(--gray-border); margin: 18px 0; }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .input-row { grid-template-columns: 1fr; }
+    header h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">🏀 Official Order</div>
+  <h1 id="team-name-header">FBA</h1>
+  <p>ใบสั่งซื้อชุดแข่งอย่างเป็นทางการ</p>
+</header>
+
+<div class="steps">
+  <div class="step active" id="step1"><span>📋</span>กรอกข้อมูล</div>
+  <div class="step" id="step2"><span>🛒</span>ตะกร้า</div>
+  <div class="step" id="step3"><span>💳</span>ชำระเงิน</div>
+  <div class="step" id="step4"><span>✅</span>ยืนยัน</div>
+</div>
+
+<div class="container">
+
+  <!-- PAGE 1: Order Form -->
+  <div class="page active" id="page-order">
+
+    <!-- Jersey preview -->
+    <div class="card" id="jersey-preview-card">
+      <div class="jersey-preview-gallery">
+        <div class="jersey-preview-item">
+          <img id="jersey-img-navy" src="" alt="ชุดแข่ง FBA สีน้ำเงิน"
+            onerror="this.style.display='none';document.getElementById('jersey-missing-navy').style.display='flex'"
+            onload="this.style.display='block';document.getElementById('jersey-missing-navy').style.display='none'">
+          <div class="jersey-preview-missing" id="jersey-missing-navy" style="display:none">
+            📷 ยังไม่มีรูปชุดสีน้ำเงิน
+          </div>
+          <div class="pv-label">สีน้ำเงิน</div>
+        </div>
+        <div class="jersey-preview-item">
+          <img id="jersey-img-white" src="" alt="ชุดแข่ง FBA สีขาว"
+            onerror="this.style.display='none';document.getElementById('jersey-missing-white').style.display='flex'"
+            onload="this.style.display='block';document.getElementById('jersey-missing-white').style.display='none'">
+          <div class="jersey-preview-missing" id="jersey-missing-white" style="display:none">
+            📷 ยังไม่มีรูปชุดสีขาว
+          </div>
+          <div class="pv-label">ขาว</div>
+        </div>
+      </div>
+      <div class="price-info">
+        <div>
+          <div class="label">ราคาต่อชุด (เสื้อ + กางเกง)</div>
+          <div class="price" id="price-label">450 ฿</div>
+        </div>
+        <div style="font-size:28px">👕</div>
+      </div>
+    </div>
+
+    <!-- Customer Info -->
+    <div class="card">
+      <div class="card-title">📋 ข้อมูลผู้สั่งซื้อ</div>
+
+      <div class="form-group">
+        <label>ชื่อ-นามสกุล</label>
+        <input type="text" id="buyer-name" placeholder="เช่น สมชาย ใจดี">
+        <div class="error-msg" id="err-name">กรุณากรอกชื่อ-นามสกุล</div>
+      </div>
+
+      <div class="form-group">
+        <label>เบอร์โทรศัพท์</label>
+        <input type="tel" id="buyer-phone" placeholder="0812345678">
+        <div class="error-msg" id="err-phone">กรุณากรอกเบอร์โทรให้ถูกต้อง</div>
+      </div>
+
+      <div class="form-group">
+        <label>LINE ID <span class="hint">(ไม่บังคับ)</span></label>
+        <input type="text" id="buyer-line" placeholder="เช่น @somchai">
+      </div>
+    </div>
+
+    <!-- Product Details -->
+    <div class="card">
+      <div class="card-title">👕 รายละเอียดชุดที่สั่ง</div>
+
+      <div class="form-group">
+        <label>สีชุด</label>
+        <div class="color-options">
+          <label class="color-option" for="color-navy">
+            <input type="radio" name="jersey-color" id="color-navy" value="น้ำเงิน" checked>
+            <span class="swatches"><span class="swatch navy"></span></span>
+            <span class="co-text">
+              <span class="co-title">สีน้ำเงิน</span>
+              <span class="co-sub">1 ชุด</span>
+            </span>
+          </label>
+          <label class="color-option" for="color-white">
+            <input type="radio" name="jersey-color" id="color-white" value="ขาว">
+            <span class="swatches"><span class="swatch white"></span></span>
+            <span class="co-text">
+              <span class="co-title">สีขาว</span>
+              <span class="co-sub">1 ชุด</span>
+            </span>
+          </label>
+          <label class="color-option" for="color-both">
+            <input type="radio" name="jersey-color" id="color-both" value="ทั้งสีขาวและสีน้ำเงิน">
+            <span class="swatches"><span class="swatch navy"></span><span class="swatch white"></span></span>
+            <span class="co-text">
+              <span class="co-title">สีน้ำเงินและสีขาว</span>
+              <span class="co-sub">2 ชุด</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="size-toggle" onclick="toggleSizeChart()" id="size-toggle-btn">
+        📏 ดูตารางไซส์ก่อนเลือก ▼
+      </div>
+      <div class="size-chart-popup" id="size-chart-popup">
+        <img id="size-chart-img" src="" alt="Size Chart"
+          onerror="this.style.display='none';document.getElementById('size-chart-missing').style.display='block'"
+          onload="this.style.display='block';document.getElementById('size-chart-missing').style.display='none'">
+        <div id="size-chart-missing" style="display:none;background:#f4f6f9;border-radius:10px;padding:20px;text-align:center;color:#999;font-size:13px">
+          ⚠️ ไม่พบไฟล์รูป "<strong id="size-chart-filename"></strong>"<br>
+          กรุณาวางไฟล์ในโฟลเดอร์เดียวกับ jersey-order.html
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="form-group">
+          <label>ไซส์เสื้อ</label>
+          <select id="size-jersey">
+            <option value="">-- เลือกไซส์ --</option>
+            <option>2XS</option><option>XS</option><option>S</option>
+            <option>M</option><option>L</option><option>XL</option>
+            <option>2XL</option><option>3XL</option><option>4XL</option>
+            <option>5XL</option><option>6XL</option>
+          </select>
+          <div class="error-msg" id="err-jersey">กรุณาเลือกไซส์เสื้อ</div>
+        </div>
+        <div class="form-group">
+          <label>ไซส์กางเกง</label>
+          <select id="size-shorts">
+            <option value="">-- เลือกไซส์ --</option>
+            <option>2XS</option><option>XS</option><option>S</option>
+            <option>M</option><option>L</option><option>XL</option>
+            <option>2XL</option><option>3XL</option><option>4XL</option>
+            <option>5XL</option><option>6XL</option>
+          </select>
+          <div class="error-msg" id="err-shorts">กรุณาเลือกไซส์กางเกง</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>ชื่อที่จะสกรีนหลังเสื้อ
+          <span class="hint">ภาษาอังกฤษ ตัวพิมพ์ใหญ่ ไม่เกิน 10 ตัว</span>
+        </label>
+        <input type="text" id="print-name" placeholder="เช่น SOMCHAI"
+          maxlength="10" style="text-transform:uppercase"
+          oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')">
+        <div class="error-msg" id="err-printname">กรุณากรอกชื่อภาษาอังกฤษ (ตัวพิมพ์ใหญ่เท่านั้น)</div>
+      </div>
+
+      <div class="form-group">
+        <label>เบอร์เสื้อ <span class="hint">ตัวเลข 0–99</span></label>
+        <input type="number" id="jersey-number" placeholder="เช่น 6" min="0" max="99">
+        <div class="error-msg" id="err-number">กรุณาระบุเบอร์เสื้อ (0–99)</div>
+      </div>
+
+      <div class="form-group">
+        <label>จำนวนชุด</label>
+        <input type="number" id="qty" placeholder="1" min="1" max="20" value="1">
+        <div class="error-msg" id="err-qty">กรุณาระบุจำนวน</div>
+      </div>
+
+      <div class="form-group">
+        <label>หมายเหตุ <span class="hint">ไซส์พิเศษหรืออื่นๆ (ไม่บังคับ)</span></label>
+        <input type="text" id="note" placeholder="เช่น ต้องการรอบอกพิเศษ">
+      </div>
+
+      <button class="btn btn-primary" onclick="addToCart()">➕ เพิ่มลงตะกร้า</button>
+    </div>
+
+  </div>
+
+  <!-- PAGE 2: Cart -->
+  <div class="page" id="page-cart">
+
+    <div class="card">
+      <div class="card-title">🛒 ตะกร้าสินค้า</div>
+      <div id="cart-list">
+        <div class="cart-empty">ยังไม่มีสินค้าในตะกร้า</div>
+      </div>
+      <div class="total-bar" id="total-bar" style="display:none">
+        <div>
+          <div class="t-label">ยอดรวมทั้งหมด</div>
+        </div>
+        <div class="t-amount" id="total-amount">0 ฿</div>
+      </div>
+    </div>
+
+    <button class="btn btn-outline" onclick="goPage('order')">+ เพิ่มชุดอีก</button>
+    <button class="btn btn-red" id="btn-pay" onclick="goToPayment()" style="margin-top:14px;display:none">
+      💳 ดำเนินการชำระเงิน
+    </button>
+
+  </div>
+
+  <!-- PAGE 3: Payment -->
+  <div class="page" id="page-payment">
+
+    <div class="payment-card">
+      <div class="amount-label">ยอดที่ต้องชำระ</div>
+      <div class="amount-value" id="qr-amount-display">0 ฿</div>
+
+      <div class="qr-wrap">
+        <img id="qr-static-img" src="" alt="QR PromptPay"
+          onerror="this.style.display='none';document.getElementById('qr-missing').style.display='flex'">
+        <div class="qr-missing" id="qr-missing" style="display:none">
+          <span style="font-size:32px">📷</span>
+          ยังไม่มีรูป QR<br>ใส่ชื่อไฟล์ใน CONFIG
+        </div>
+      </div>
+      <p style="font-size:12px;opacity:0.6;margin-bottom:10px">สแกน QR ด้วยแอปธนาคาร / PromptPay</p>
+      <button onclick="saveQR()" style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);color:white;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:18px" id="save-qr-btn">
+        💾 บันทึก QR Code
+      </button>
+
+      <div class="bank-detail-row">
+        <div>
+          <div class="bd-label">ธนาคาร</div>
+          <div class="bd-value" id="bd-bank"></div>
+        </div>
+      </div>
+      <div class="bank-detail-row">
+        <div>
+          <div class="bd-label">ชื่อบัญชี</div>
+          <div class="bd-value" id="bd-name"></div>
+        </div>
+      </div>
+      <div class="bank-detail-row">
+        <div>
+          <div class="bd-label">เลขบัญชี</div>
+          <div class="bd-value" id="bd-accno"></div>
+        </div>
+        <button class="copy-btn" id="copy-accno" onclick="copyAccNo()">คัดลอก</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📎 อัปโหลดสลิปการโอนเงิน</div>
+
+      <div class="upload-area" id="upload-area">
+        <input type="file" id="slip-file" accept="image/*" onchange="handleSlip(event)">
+        <div class="upload-icon">📱</div>
+        <div class="upload-text">
+          <strong>แตะที่นี่เพื่อเลือกรูปสลิป</strong><br>
+          รองรับ JPG, PNG
+        </div>
+      </div>
+
+      <div id="slip-preview">
+        <img id="slip-img" src="" alt="สลิป">
+        <div class="slip-ok">✅ อัปโหลดสลิปเรียบร้อย</div>
+      </div>
+
+      <button class="btn btn-success" onclick="submitOrder()" id="btn-submit"
+        style="margin-top:20px;opacity:0.4;cursor:not-allowed" disabled>
+        ✅ ยืนยันการสั่งซื้อ
+      </button>
+    </div><!-- /card -->
+
+  </div><!-- /page-payment -->
+
+  <!-- PAGE 4: Confirmation -->
+  <div class="page" id="page-confirm">
+    <div class="card">
+      <div class="confirm-box">
+        <div class="confirm-icon">🎉</div>
+        <div class="confirm-title">ได้รับคำสั่งซื้อแล้ว!</div>
+        <div class="confirm-sub">
+          ทีมงานจะตรวจสอบสลิปและยืนยัน<br>
+          <strong>ภายใน 1–2 ชั่วโมง</strong> ผ่านทาง LINE<br><br>
+          ติดต่อสอบถาม LINE: <strong id="confirm-line"></strong>
+        </div>
+        <div class="order-summary-card" id="confirm-summary"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ── Apply config ──────────────────────────────────────────────
+document.getElementById('team-name-header').textContent = CONFIG.teamName;
+document.getElementById('price-label').textContent = CONFIG.pricePerSet.toLocaleString() + ' ฿';
+document.getElementById('confirm-line').textContent = CONFIG.lineId;
+
+// Images
+const jerseyImgNavy = document.getElementById('jersey-img-navy');
+if (CONFIG.images.jerseyNavy) {
+  jerseyImgNavy.src = CONFIG.images.jerseyNavy;
+} else {
+  jerseyImgNavy.style.display = 'none';
+  document.getElementById('jersey-missing-navy').style.display = 'flex';
+}
+
+const jerseyImgWhite = document.getElementById('jersey-img-white');
+if (CONFIG.images.jerseyWhite) {
+  jerseyImgWhite.src = CONFIG.images.jerseyWhite;
+} else {
+  jerseyImgWhite.style.display = 'none';
+  document.getElementById('jersey-missing-white').style.display = 'flex';
+}
+
+const sizeChartImg = document.getElementById('size-chart-img');
+document.getElementById('size-chart-filename').textContent = CONFIG.images.sizeChart || 'size-chart.jpg';
+if (CONFIG.images.sizeChart) {
+  sizeChartImg.src = CONFIG.images.sizeChart;
+} else {
+  document.getElementById('size-toggle-btn').style.display = 'none';
+}
+
+// Bank info
+document.getElementById('bd-bank').textContent = CONFIG.bankName;
+document.getElementById('bd-name').textContent = CONFIG.accountName;
+document.getElementById('bd-accno').textContent = CONFIG.accountNumber;
+
+// ── State ─────────────────────────────────────────────────────
+let cart = [];
+let slipBase64 = null; // เก็บสลิปเป็น base64 string
+
+// ── Navigation ────────────────────────────────────────────────
+function goPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const steps = { order: 0, cart: 1, payment: 2, confirm: 3 };
+  document.querySelectorAll('.step').forEach((s, i) => {
+    s.classList.remove('active', 'done');
+    if (i === steps[name]) s.classList.add('active');
+    else if (i < steps[name]) s.classList.add('done');
+  });
+  window.scrollTo(0, 0);
+}
+
+// ── Color option highlight ─────────────────────────────────────
+function updateColorOptions() {
+  document.querySelectorAll('.color-option').forEach(opt => {
+    const input = opt.querySelector('input[type="radio"]');
+    opt.classList.toggle('selected', input.checked);
+  });
+}
+document.querySelectorAll('input[name="jersey-color"]').forEach(input => {
+  input.addEventListener('change', updateColorOptions);
+});
+updateColorOptions();
+
+// ── Size chart toggle ─────────────────────────────────────────
+function toggleSizeChart() {
+  const popup = document.getElementById('size-chart-popup');
+  const btn = document.getElementById('size-toggle-btn');
+  const isOpen = popup.classList.toggle('open');
+  btn.textContent = isOpen ? '📏 ซ่อนตารางไซส์ ▲' : '📏 ดูตารางไซส์ก่อนเลือก ▼';
+}
+
+// ── Validate & Add to cart ────────────────────────────────────
+function validate(id, errId, condition) {
+  const el = document.getElementById(id);
+  const err = document.getElementById(errId);
+  if (condition) {
+    el.classList.remove('error'); err.classList.remove('show'); return true;
+  } else {
+    el.classList.add('error'); err.classList.add('show'); return false;
+  }
+}
+
+function addToCart() {
+  const name = document.getElementById('buyer-name').value.trim();
+  const phone = document.getElementById('buyer-phone').value.trim();
+  const color = document.querySelector('input[name="jersey-color"]:checked').value;
+  const jersey = document.getElementById('size-jersey').value;
+  const shorts = document.getElementById('size-shorts').value;
+  const printName = document.getElementById('print-name').value.trim();
+  const num = document.getElementById('jersey-number').value;
+  const qty = parseInt(document.getElementById('qty').value) || 0;
+  const note = document.getElementById('note').value.trim();
+
+  let ok = true;
+  ok &= validate('buyer-name', 'err-name', name.length > 0);
+  ok &= validate('buyer-phone', 'err-phone', /^0[0-9]{8,9}$/.test(phone.replace(/-/g,'')));
+  ok &= validate('size-jersey', 'err-jersey', jersey !== '');
+  ok &= validate('size-shorts', 'err-shorts', shorts !== '');
+  ok &= validate('print-name', 'err-printname', /^[A-Z]{1,10}$/.test(printName));
+  ok &= validate('jersey-number', 'err-number', num !== '' && +num >= 0 && +num <= 99);
+  ok &= validate('qty', 'err-qty', qty >= 1);
+
+  if (!ok) return;
+
+  cart.push({
+    buyerName: name,
+    phone,
+    line: document.getElementById('buyer-line').value.trim(),
+    color,
+    jerseySize: jersey,
+    shortsSize: shorts,
+    printName,
+    jerseyNumber: num,
+    qty,
+    note,
+    subtotal: qty * CONFIG.pricePerSet * (color === 'ทั้งสีขาวและสีน้ำเงิน' ? 2 : 1),
+  });
+
+  renderCart();
+  goPage('cart');
+}
+
+// ── Cart rendering ─────────────────────────────────────────────
+function renderCart() {
+  const list = document.getElementById('cart-list');
+  if (cart.length === 0) {
+    list.innerHTML = '<div class="cart-empty">ยังไม่มีสินค้าในตะกร้า</div>';
+    document.getElementById('total-bar').style.display = 'none';
+    document.getElementById('btn-pay').style.display = 'none';
+    return;
+  }
+
+  list.innerHTML = cart.map((item, i) => `
+    <div class="cart-item">
+      <div class="cart-item-info">
+        <div class="cart-item-name">
+          ${item.printName} #${item.jerseyNumber} × ${item.qty} ชุด
+        </div>
+        <div class="cart-item-detail">
+          สี${item.color} · เสื้อ ${item.jerseySize} / กางเกง ${item.shortsSize}
+          ${item.note ? '· ' + item.note : ''}
+        </div>
+        <div class="cart-item-detail">ผู้สั่ง: ${item.buyerName} (${item.phone})</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <div class="cart-item-price">${item.subtotal.toLocaleString()} ฿</div>
+        <button class="cart-item-remove" onclick="removeItem(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
+
+  const total = cart.reduce((s, i) => s + i.subtotal, 0);
+  document.getElementById('total-amount').textContent = total.toLocaleString() + ' ฿';
+  document.getElementById('total-bar').style.display = 'flex';
+  document.getElementById('btn-pay').style.display = 'flex';
+}
+
+function removeItem(i) {
+  cart.splice(i, 1);
+  renderCart();
+}
+
+// ── Payment ───────────────────────────────────────────────────
+function goToPayment() {
+  if (cart.length === 0) return;
+  const total = cart.reduce((s, i) => s + i.subtotal, 0);
+  document.getElementById('qr-amount-display').textContent = total.toLocaleString() + ' ฿';
+
+  // Set static QR image
+  const qrImg = document.getElementById('qr-static-img');
+  const qrMissing = document.getElementById('qr-missing');
+  if (CONFIG.images.promptPayQR) {
+    qrImg.src = CONFIG.images.promptPayQR;
+    qrImg.style.display = 'block';
+    qrMissing.style.display = 'none';
+  } else {
+    qrImg.style.display = 'none';
+    qrMissing.style.display = 'flex';
+  }
+
+  slipBase64 = null;
+  document.getElementById('slip-preview').style.display = 'none';
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed';
+  goPage('payment');
+}
+
+// ── Save QR image ─────────────────────────────────────────────
+function saveQR() {
+  const img = document.getElementById('qr-static-img');
+  if (!img.src || img.style.display === 'none') {
+    alert('ยังไม่มีรูป QR — กรุณาใส่ชื่อไฟล์ใน CONFIG ก่อน');
+    return;
+  }
+  // Draw to canvas then download
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const tmpImg = new Image();
+  tmpImg.crossOrigin = 'anonymous';
+  tmpImg.onload = () => {
+    canvas.width = tmpImg.naturalWidth;
+    canvas.height = tmpImg.naturalHeight;
+    ctx.drawImage(tmpImg, 0, 0);
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'promptpay-qr.png';
+    a.click();
+  };
+  tmpImg.onerror = () => {
+    // fallback: direct link download
+    const a = document.createElement('a');
+    a.href = img.src;
+    a.download = 'promptpay-qr.jpg';
+    a.click();
+  };
+  tmpImg.src = img.src;
+}
+
+// ── Copy account number ───────────────────────────────────────
+function copyAccNo() {
+  navigator.clipboard.writeText(CONFIG.accountNumber).then(() => {
+    const btn = document.getElementById('copy-accno');
+    btn.textContent = '✓ คัดลอกแล้ว';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'คัดลอก'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── Slip handling ─────────────────────────────────────────────
+function handleSlip(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    slipBase64 = ev.target.result; // เก็บเป็น base64 data URL
+    document.getElementById('slip-img').src = slipBase64;
+    document.getElementById('slip-preview').style.display = 'block';
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Drag & drop
+const uploadArea = document.getElementById('upload-area');
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault(); uploadArea.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    document.getElementById('slip-file').files = e.dataTransfer.files;
+    handleSlip({ target: { files: [file] } });
+  }
+});
+
+// ── Submit ─────────────────────────────────────────────────────
+async function submitOrder() {
+  const total = cart.reduce((s, i) => s + i.subtotal, 0);
+
+  // Build summary HTML
+  let summaryHtml = `<strong>🧾 สรุปคำสั่งซื้อ</strong><br>`;
+  cart.forEach((item, i) => {
+    summaryHtml += `
+      ${i+1}. ${item.buyerName} — #${item.jerseyNumber} ${item.printName}<br>
+      &nbsp;&nbsp;&nbsp;สี${item.color} · เสื้อ ${item.jerseySize} / กางเกง ${item.shortsSize} × ${item.qty} ชุด = ${item.subtotal.toLocaleString()} ฿<br>
+      ${item.note ? '&nbsp;&nbsp;&nbsp;หมายเหตุ: ' + item.note + '<br>' : ''}
+    `;
+  });
+  summaryHtml += `<hr style="margin:8px 0"><strong>ยอดรวม: ${total.toLocaleString()} ฿</strong>`;
+  document.getElementById('confirm-summary').innerHTML = summaryHtml;
+
+  // Send to Google Apps Script if configured
+  if (CONFIG.scriptUrl) {
+    try {
+      // ส่งเป็น URL-encoded string (Apps Script รับได้ดีที่สุด)
+      const params = new URLSearchParams();
+      params.append('orders', JSON.stringify(cart));
+      if (slipBase64) params.append('slip', slipBase64);
+      await fetch(CONFIG.scriptUrl, {
+        method: 'POST',
+        body: params,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
+    } catch(e) { /* silent fail */ }
+  }
+
+  goPage('confirm');
+}
+</script>
+
+</body>
+</html>
