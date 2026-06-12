@@ -271,6 +271,23 @@ const CONFIG = {
   }
   .color-option.selected .co-title { color: var(--navy); }
 
+  /* Live order price summary */
+  .order-price-summary {
+    margin-top: 10px;
+    background: var(--gray-bg);
+    border: 1.5px solid var(--gray-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .order-price-summary .ops-total {
+    font-weight: 800;
+    color: var(--navy);
+    font-size: 16px;
+  }
+
   /* Size chart toggle */
   .size-toggle {
     display: inline-flex;
@@ -686,9 +703,10 @@ const CONFIG = {
       </div>
 
       <div class="form-group">
-        <label>จำนวนชุด</label>
+        <label>จำนวนชุด <span class="hint">(ต่อคน — ถ้าเลือก 2 สี นับเป็น 1 ชุดต่อคน)</span></label>
         <input type="number" id="qty" placeholder="1" min="1" max="20" value="1">
         <div class="error-msg" id="err-qty">กรุณาระบุจำนวน</div>
+        <div id="order-price-summary" class="order-price-summary"></div>
       </div>
 
       <div class="form-group">
@@ -869,9 +887,29 @@ function updateColorOptions() {
   });
 }
 document.querySelectorAll('input[name="jersey-color"]').forEach(input => {
-  input.addEventListener('change', updateColorOptions);
+  input.addEventListener('change', () => { updateColorOptions(); updateOrderSummary(); });
 });
 updateColorOptions();
+
+// ── Live price summary ──────────────────────────────────────────
+function updateOrderSummary() {
+  const color = document.querySelector('input[name="jersey-color"]:checked').value;
+  const qty = parseInt(document.getElementById('qty').value) || 0;
+  const setsPerPerson = color === 'ทั้งสีขาวและสีน้ำเงิน' ? 2 : 1;
+  const totalSets = qty * setsPerPerson;
+  const totalPrice = totalSets * CONFIG.pricePerSet;
+  const summary = document.getElementById('order-price-summary');
+
+  if (qty <= 0) { summary.innerHTML = ''; return; }
+
+  let breakdown = `${qty} คน`;
+  if (setsPerPerson === 2) breakdown += ` × 2 สี (น้ำเงิน + ขาว)`;
+  breakdown += ` = ${totalSets} ชุด`;
+
+  summary.innerHTML = `${breakdown}<br><span class="ops-total">รวม ${totalPrice.toLocaleString()} ฿</span>`;
+}
+document.getElementById('qty').addEventListener('input', updateOrderSummary);
+updateOrderSummary();
 
 // ── Size chart toggle ─────────────────────────────────────────
 function toggleSizeChart() {
