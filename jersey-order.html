@@ -688,11 +688,11 @@ const CONFIG = {
 
       <div class="form-group">
         <label>ชื่อที่จะสกรีนหลังเสื้อ
-          <span class="hint">ภาษาอังกฤษ ตัวพิมพ์ใหญ่ ไม่เกิน 10 ตัว</span>
+          <span class="hint">ภาษาอังกฤษ ตัวพิมพ์ใหญ่ เว้นวรรคได้ ไม่เกิน 15 ตัว</span>
         </label>
-        <input type="text" id="print-name" placeholder="เช่น SOMCHAI"
-          maxlength="10" style="text-transform:uppercase"
-          oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')">
+        <input type="text" id="print-name" placeholder="เช่น SOMCHAI หรือ JOE SMITH"
+          maxlength="15" style="text-transform:uppercase"
+          oninput="this.value=this.value.toUpperCase().replace(/[^A-Z ]/g,'').replace(/^ /,'')">
         <div class="error-msg" id="err-printname">กรุณากรอกชื่อภาษาอังกฤษ (ตัวพิมพ์ใหญ่เท่านั้น)</div>
       </div>
 
@@ -946,7 +946,7 @@ function addToCart() {
   ok &= validate('buyer-phone', 'err-phone', /^0[0-9]{8,9}$/.test(phone.replace(/-/g,'')));
   ok &= validate('size-jersey', 'err-jersey', jersey !== '');
   ok &= validate('size-shorts', 'err-shorts', shorts !== '');
-  ok &= validate('print-name', 'err-printname', /^[A-Z]{1,10}$/.test(printName));
+  ok &= validate('print-name', 'err-printname', /^[A-Z][A-Z ]{0,14}$/.test(printName) && printName.trim().length >= 1);
   ok &= validate('jersey-number', 'err-number', num !== '' && +num >= 0 && +num <= 99);
   ok &= validate('qty', 'err-qty', qty >= 1);
 
